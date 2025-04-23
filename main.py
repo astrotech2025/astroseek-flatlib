@@ -13,24 +13,29 @@ def astro_data():
     nome = request.args.get("nome", "Anonimo")
     data = request.args.get("data")
     ora = request.args.get("ora")
-    luogo = request.args.get("luogo", "Roma")
+    luogo = request.args.get("luogo", "Taranto")
+
+    print(f"➡️ Ricevuto: nome={nome}, data={data}, ora={ora}, luogo={luogo}")
 
     if not data or not ora or not luogo:
+        print("⛔ Parametri mancanti.")
         return jsonify({"error": "Parametri insufficienti"}), 400
 
     try:
-        anno, mese, giorno = data.split("-")
-        hh, mm = ora.split(":")
-        dt = Datetime(f"{anno}-{mese}-{giorno}", f"{hh}:{mm}", '+01:00')  # UTC+1
+        anno, mese, giorno = data.strip().split("-")
+        hh, mm = ora.strip().split(":")
+        dt = Datetime(f"{anno}-{mese}-{giorno}", f"{hh}:{mm}", '+01:00')  # timezone fissa
 
-        # Coordinate provvisorie basate sul luogo
+        # Coordinate base (si può aggiungere geocoding reale)
         if "Taranto" in luogo:
-            pos = GeoPos("40.4644", "17.2470")
+            lat, lon = "40.4644", "17.2470"
         elif "Roma" in luogo:
-            pos = GeoPos("41.9028", "12.4964")
+            lat, lon = "41.9028", "12.4964"
         else:
-            # Default generico (es. Bari)
-            pos = GeoPos("41.1171", "16.8719")
+            lat, lon = "41.1171", "16.8719"  # Bari fallback
+
+        pos = GeoPos(lat, lon)
+        print(f"📍 Coordinate usate: {lat}, {lon}")
 
         chart = Chart(dt, pos)
 
@@ -38,13 +43,17 @@ def astro_data():
         luna = chart.get(const.MOON)
         asc = chart.get(const.ASC)
 
+        print(f"✅ Sole: {sole.sign}, Luna: {luna.sign}, Ascendente: {asc.sign}")
+
         return jsonify({
             "nome": nome,
             "sole": sole.sign,
             "luna": luna.sign,
             "ascendente": asc.sign
         })
+
     except Exception as e:
+        print(f"❌ Errore di calcolo: {str(e)}")
         return jsonify({"error": f"Errore di calcolo: {str(e)}"}), 400
 
 if __name__ == "__main__":
