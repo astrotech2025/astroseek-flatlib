@@ -23,8 +23,12 @@ def astro_data():
 
     try:
         print(f"🧪 Debug: valore di data prima del parsing: {data}", flush=True)
-        anno, mese, giorno = map(int, data.strip().split("-"))
+        
+        # Normalizza simboli non validi per il trattino
+        cleaned_date = data.strip().replace("–", "-").replace("—", "-").replace("−", "-")
+        anno, mese, giorno = map(int, cleaned_date.split("-"))
         hh, mm = map(int, ora.strip().split(":"))
+
         dt = Datetime(f"{anno:04d}-{mese:02d}-{giorno:02d}", f"{hh:02d}:{mm:02d}", '+01:00')
     except Exception as e:
         print(f"⚠️ Errore parsing data/ora: {str(e)}", flush=True)
