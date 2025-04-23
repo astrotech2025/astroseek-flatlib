@@ -4,9 +4,14 @@ from flatlib.chart import Chart
 from flatlib.datetime import Datetime
 from flatlib.geopos import GeoPos
 from flatlib import const
+import re
 
 app = Flask(__name__)
 CORS(app)
+
+def normalize_date(d):
+    # Rimuove ogni carattere non numerico o trattino
+    return re.sub(r"[^\d\-]", "", d.replace("–", "-").replace("—", "-").replace("−", "-"))
 
 @app.route("/astroseek", methods=["GET"])
 def astro_data():
@@ -22,14 +27,15 @@ def astro_data():
         return jsonify({"error": "Parametri insufficienti"}), 400
 
     try:
-        print(f"🧪 Debug: valore di data prima del parsing: {data}", flush=True)
-        
-        # Normalizza simboli non validi per il trattino
-        cleaned_date = data.strip().replace("–", "-").replace("—", "-").replace("−", "-")
-        anno, mese, giorno = map(int, cleaned_date.split("-"))
+        data = normalize_date(data)
+        ora = normalize_date(ora)
+        print(f"🧪 Data normalizzata: {data}, Ora: {ora}", flush=True)
+
+        anno, mese, giorno = map(int, data.strip().split("-"))
         hh, mm = map(int, ora.strip().split(":"))
 
         dt = Datetime(f"{anno:04d}-{mese:02d}-{giorno:02d}", f"{hh:02d}:{mm:02d}", '+01:00')
+
     except Exception as e:
         print(f"⚠️ Errore parsing data/ora: {str(e)}", flush=True)
         return jsonify({"error": f"Errore parsing data/ora: {str(e)}"}), 400
@@ -40,7 +46,7 @@ def astro_data():
         elif "Roma" in luogo:
             lat, lon = "41.9028", "12.4964"
         else:
-            lat, lon = "41.1171", "16.8719"  # Default Bari
+            lat, lon = "41.1171", "16.8719"
 
         pos = GeoPos(lat, lon)
         print(f"📍 Coordinate usate: {lat}, {lon}", flush=True)
