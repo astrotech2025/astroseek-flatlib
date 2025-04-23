@@ -1,4 +1,3 @@
-
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flatlib.chart import Chart
@@ -23,20 +22,27 @@ def astro_data():
         return jsonify({"error": "Parametri insufficienti"}), 400
 
     try:
-        anno, mese, giorno = data.strip().split("-")
-        hh, mm = ora.strip().split(":")
-        dt = Datetime(f"{anno}-{mese}-{giorno}", f"{hh}:{mm}", '+01:00')
+        # Parsing sicuro con gestione errori
+        anno, mese, giorno = map(int, data.strip().split("-"))
+        hh, mm = map(int, ora.strip().split(":"))
+        dt = Datetime(f"{anno:04d}-{mese:02d}-{giorno:02d}", f"{hh:02d}:{mm:02d}", '+01:00')
+    except Exception as e:
+        print(f"⚠️ Errore parsing data/ora: {str(e)}")
+        return jsonify({"error": f"Errore parsing data/ora: {str(e)}"}), 400
 
+    try:
+        # Coordinate geografiche
         if "Taranto" in luogo:
             lat, lon = "40.4644", "17.2470"
         elif "Roma" in luogo:
             lat, lon = "41.9028", "12.4964"
         else:
-            lat, lon = "41.1171", "16.8719"  # Default Bari
+            lat, lon = "41.1171", "16.8719"  # Default: Bari
 
         pos = GeoPos(lat, lon)
         print(f"📍 Coordinate usate: {lat}, {lon}")
 
+        # Calcolo profilo astrale
         chart = Chart(dt, pos)
 
         sole = chart.get(const.SUN)
