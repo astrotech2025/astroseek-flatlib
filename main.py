@@ -1,4 +1,3 @@
-
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flatlib.chart import Chart
@@ -37,7 +36,7 @@ def astro_data():
         elif "Roma" in luogo:
             lat, lon = "41.9028", "12.4964"
         else:
-            lat, lon = "41.1171", "16.8719"
+            lat, lon = "41.1171", "16.8719"  # Default Bari
 
         pos = GeoPos(lat, lon)
         print(f"📍 Coordinate usate: {lat}, {lon}")
