@@ -15,19 +15,19 @@ def astro_data():
     ora = request.args.get("ora")
     luogo = request.args.get("luogo", "Taranto")
 
-    print(f"➡️ Ricevuto: nome={nome}, data={data}, ora={ora}, luogo={luogo}")
+    print(f"➡️ Ricevuto: nome={nome}, data={data}, ora={ora}, luogo={luogo}", flush=True)
 
     if not data or not ora or not luogo:
-        print("⛔ Parametri mancanti.")
+        print("⛔ Parametri mancanti.", flush=True)
         return jsonify({"error": "Parametri insufficienti"}), 400
 
     try:
-        print(f"🧪 Debug: valore di data prima del parsing: {data}")
+        print(f"🧪 Debug: valore di data prima del parsing: {data}", flush=True)
         anno, mese, giorno = map(int, data.strip().split("-"))
         hh, mm = map(int, ora.strip().split(":"))
         dt = Datetime(f"{anno:04d}-{mese:02d}-{giorno:02d}", f"{hh:02d}:{mm:02d}", '+01:00')
     except Exception as e:
-        print(f"⚠️ Errore parsing data/ora: {str(e)}")
+        print(f"⚠️ Errore parsing data/ora: {str(e)}", flush=True)
         return jsonify({"error": f"Errore parsing data/ora: {str(e)}"}), 400
 
     try:
@@ -39,14 +39,14 @@ def astro_data():
             lat, lon = "41.1171", "16.8719"  # Default Bari
 
         pos = GeoPos(lat, lon)
-        print(f"📍 Coordinate usate: {lat}, {lon}")
+        print(f"📍 Coordinate usate: {lat}, {lon}", flush=True)
 
         chart = Chart(dt, pos)
         sole = chart.get(const.SUN)
         luna = chart.get(const.MOON)
         asc = chart.get(const.ASC)
 
-        print(f"✅ Sole: {sole.sign}, Luna: {luna.sign}, Ascendente: {asc.sign}")
+        print(f"✅ Sole: {sole.sign}, Luna: {luna.sign}, Ascendente: {asc.sign}", flush=True)
 
         return jsonify({
             "nome": nome,
@@ -56,7 +56,7 @@ def astro_data():
         })
 
     except Exception as e:
-        print(f"❌ Errore di calcolo: {str(e)}")
+        print(f"❌ Errore di calcolo: {str(e)}", flush=True)
         return jsonify({"error": f"Errore di calcolo: {str(e)}"}), 400
 
 if __name__ == "__main__":
