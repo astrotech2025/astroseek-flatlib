@@ -10,8 +10,17 @@ app = Flask(__name__)
 CORS(app)
 
 def normalize_date(d):
-    # Rimuove ogni carattere non numerico o trattino
     return re.sub(r"[^\d\-]", "", d.replace("–", "-").replace("—", "-").replace("−", "-"))
+
+def normalize_time(t):
+    t = re.sub(r"[^\d:]", "", t)
+    parts = t.split(":")
+    if len(parts) == 1:
+        return f"{parts[0]}:00"
+    elif len(parts) == 2:
+        return f"{int(parts[0]):02d}:{int(parts[1]):02d}"
+    else:
+        return "00:00"  # fallback
 
 @app.route("/astroseek", methods=["GET"])
 def astro_data():
@@ -28,8 +37,8 @@ def astro_data():
 
     try:
         data = normalize_date(data)
-        ora = normalize_date(ora)
-        print(f"🧪 Data normalizzata: {data}, Ora: {ora}", flush=True)
+        ora = normalize_time(ora)
+        print(f"🧪 Data normalizzata: {data}, Ora normalizzata: {ora}", flush=True)
 
         anno, mese, giorno = map(int, data.strip().split("-"))
         hh, mm = map(int, ora.strip().split(":"))
@@ -46,7 +55,7 @@ def astro_data():
         elif "Roma" in luogo:
             lat, lon = "41.9028", "12.4964"
         else:
-            lat, lon = "41.1171", "16.8719"
+            lat, lon = "41.1171", "16.8719"  # Default Bari
 
         pos = GeoPos(lat, lon)
         print(f"📍 Coordinate usate: {lat}, {lon}", flush=True)
