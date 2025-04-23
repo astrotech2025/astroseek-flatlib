@@ -10,17 +10,15 @@ app = Flask(__name__)
 CORS(app)
 
 def normalize_date(d):
-    return re.sub(r"[^\d\-]", "", d.replace("–", "-").replace("—", "-").replace("−", "-"))
+    return re.sub(r"[^\d\-]", "", d.strip())
 
 def normalize_time(t):
-    t = re.sub(r"[^\d:]", "", t)
-    parts = t.split(":")
+    parts = t.strip().split(":")
     if len(parts) == 1:
         return f"{parts[0]}:00"
     elif len(parts) == 2:
         return f"{int(parts[0]):02d}:{int(parts[1]):02d}"
-    else:
-        return "00:00"  # fallback
+    return "12:00"
 
 @app.route("/astroseek", methods=["GET"])
 def astro_data():
@@ -28,54 +26,51 @@ def astro_data():
     data = request.args.get("data")
     ora = request.args.get("ora")
     luogo = request.args.get("luogo", "Taranto")
-
-    print(f"➡️ Ricevuto: nome={nome}, data={data}, ora={ora}, luogo={luogo}", flush=True)
+    genere = request.args.get("genere", "neutro")
 
     if not data or not ora or not luogo:
-        print("⛔ Parametri mancanti.", flush=True)
         return jsonify({"error": "Parametri insufficienti"}), 400
 
     try:
         data = normalize_date(data)
         ora = normalize_time(ora)
-        print(f"🧪 Data normalizzata: {data}, Ora normalizzata: {ora}", flush=True)
-
-        anno, mese, giorno = map(int, data.strip().split("-"))
-        hh, mm = map(int, ora.strip().split(":"))
-
+        anno, mese, giorno = map(int, data.split("-"))
+        hh, mm = map(int, ora.split(":"))
         dt = Datetime(f"{anno:04d}-{mese:02d}-{giorno:02d}", f"{hh:02d}:{mm:02d}", '+01:00')
 
-    except Exception as e:
-        print(f"⚠️ Errore parsing data/ora: {str(e)}", flush=True)
-        return jsonify({"error": f"Errore parsing data/ora: {str(e)}"}), 400
-
-    try:
         if "Taranto" in luogo:
             lat, lon = "40.4644", "17.2470"
         elif "Roma" in luogo:
             lat, lon = "41.9028", "12.4964"
+        elif "Milano" in luogo:
+            lat, lon = "45.4642", "9.1900"
+        elif "Napoli" in luogo:
+            lat, lon = "40.8522", "14.2681"
         else:
-            lat, lon = "41.1171", "16.8719"  # Default Bari
+            lat, lon = "41.1171", "16.8719"  # Bari default
 
         pos = GeoPos(lat, lon)
-        print(f"📍 Coordinate usate: {lat}, {lon}", flush=True)
-
         chart = Chart(dt, pos)
-        sole = chart.get(const.SUN)
-        luna = chart.get(const.MOON)
-        asc = chart.get(const.ASC)
+        sole = chart.get(const.SUN).sign
+        luna = chart.get(const.MOON).sign
+        ascendente = chart.get(const.ASC).sign
 
-        print(f"✅ Sole: {sole.sign}, Luna: {luna.sign}, Ascendente: {asc.sign}", flush=True)
+        if genere.lower() == "maschile":
+            messaggio = "✦ Messaggio per lui: Tu sei codice che sogna. Sei emozione che organizza. Sei futuro che si muove con stile."
+        elif genere.lower() == "femminile":
+            messaggio = "✦ Messaggio per lei: Tu sei luce che danza. Sei memoria che guida. Sei universo che respira bellezza."
+        else:
+            messaggio = "✦ Messaggio per te: Sei armonia in movimento. Sei spirito che crea. Sei equilibrio tra tempo e stelle."
 
         return jsonify({
             "nome": nome,
-            "sole": sole.sign,
-            "luna": luna.sign,
-            "ascendente": asc.sign
+            "sole": sole,
+            "luna": luna,
+            "ascendente": ascendente,
+            "messaggio": messaggio
         })
 
     except Exception as e:
-        print(f"❌ Errore di calcolo: {str(e)}", flush=True)
         return jsonify({"error": f"Errore di calcolo: {str(e)}"}), 400
 
 if __name__ == "__main__":
