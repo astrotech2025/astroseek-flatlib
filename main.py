@@ -1,3 +1,4 @@
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flatlib.chart import Chart
@@ -24,15 +25,14 @@ def astro_data():
     try:
         anno, mese, giorno = data.strip().split("-")
         hh, mm = ora.strip().split(":")
-        dt = Datetime(f"{anno}-{mese}-{giorno}", f"{hh}:{mm}", '+01:00')  # timezone fissa
+        dt = Datetime(f"{anno}-{mese}-{giorno}", f"{hh}:{mm}", '+01:00')
 
-        # Coordinate base (si può aggiungere geocoding reale)
         if "Taranto" in luogo:
             lat, lon = "40.4644", "17.2470"
         elif "Roma" in luogo:
             lat, lon = "41.9028", "12.4964"
         else:
-            lat, lon = "41.1171", "16.8719"  # Bari fallback
+            lat, lon = "41.1171", "16.8719"  # Default Bari
 
         pos = GeoPos(lat, lon)
         print(f"📍 Coordinate usate: {lat}, {lon}")
