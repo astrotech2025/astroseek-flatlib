@@ -11,17 +11,26 @@ CORS(app)
 @app.route("/astroseek", methods=["GET"])
 def astro_data():
     nome = request.args.get("nome", "Anonimo")
-    data = request.args.get("data")  # yyyy-mm-dd
-    ora = request.args.get("ora")    # HH:MM
+    data = request.args.get("data")
+    ora = request.args.get("ora")
     luogo = request.args.get("luogo", "Roma")
+
+    if not data or not ora or not luogo:
+        return jsonify({"error": "Parametri insufficienti"}), 400
 
     try:
         anno, mese, giorno = data.split("-")
-        ora, minuti = ora.split(":")
-        dt = Datetime(f"{anno}-{mese}-{giorno}", f"{ora}:{minuti}", '+01:00')  # UTC+1
+        hh, mm = ora.split(":")
+        dt = Datetime(f"{anno}-{mese}-{giorno}", f"{hh}:{mm}", '+01:00')  # UTC+1
 
-        # Geolocalizzazione fittizia per il luogo, sostituibile con lookup
-        pos = GeoPos('40.4644', '17.2470') if 'Taranto' in luogo else GeoPos('41.9028', '12.4964')  # Roma default
+        # Coordinate provvisorie basate sul luogo
+        if "Taranto" in luogo:
+            pos = GeoPos("40.4644", "17.2470")
+        elif "Roma" in luogo:
+            pos = GeoPos("41.9028", "12.4964")
+        else:
+            # Default generico (es. Bari)
+            pos = GeoPos("41.1171", "16.8719")
 
         chart = Chart(dt, pos)
 
@@ -35,9 +44,8 @@ def astro_data():
             "luna": luna.sign,
             "ascendente": asc.sign
         })
-
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        return jsonify({"error": f"Errore di calcolo: {str(e)}"}), 400
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
